@@ -1,4 +1,4 @@
-# 🐳 DIP (Docker Image Pull Tar)
+# 🐳 DIPT (Docker Image Pull Tar)
 
 一个无需 Docker 环境即可拉取 Docker 镜像并保存为 tar 文件的 Go 工具。
 
