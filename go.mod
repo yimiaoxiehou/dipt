@@ -7,6 +7,9 @@ require (
 	github.com/schollz/progressbar/v3 v3.18.0
 )
 
+// Add replace directive
+replace github.com/google/go-containerregistry => ./go-containerregistry
+
 require (
 	github.com/containerd/stargz-snapshotter/estargz v0.16.3 // indirect
 	github.com/docker/cli v28.0.1+incompatible // indirect
@@ -25,3 +28,4 @@ require (
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/term v0.29.0 // indirect
 )
+
