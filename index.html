@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <script src="wasm_exec.js"></script>
+    <script src="wasm.js"></script>
+</head>
+<body>
+    <h1>Docker Image Puller</h1>
+
+	<div>
+		URL to Fetch <input type="text" id="url" name="url" value="redis">
+	</div>
+
+	<br />
+
+	<div>
+		<button id="submit" name="submit" onclick="MyFunc(url.value)">Submit Sync</button>
+	</div>
+</body>
+<script>
+	async function MyFunc(url) {
+		try {
+			const response = await MyGoFunc(url)
+			const message = await response.json()
+			console.log(message)
+			document.getElementById('json').textContent = JSON.stringify(message, undefined, 2);
+
+		} catch (err) {
+			console.error('Caught exception', err)
+		}
+	}
+</script>
+
+</html>

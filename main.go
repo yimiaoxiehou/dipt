@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"syscall/js"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -144,34 +145,53 @@ func pullAndSaveImage(imageName, outputFile string, config Config) error {
 
 	return nil
 }
+
+func MyGoFunc() js.Func {
+	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		imageName := args[0].String()
+		outputFile := "image.tar"
+
+		config := Config{}
+
+		handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+			resolve := args[0]
+			reject := args[1]
+			go func() {
+				// 拉取镜像并保存
+				resp, err := http.DefaultClient.Get("https://example.com")
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				fmt.Println(resp)
+				fmt.Printf("正在拉取镜像 %s...\n", imageName)
+
+				err = pullAndSaveImage(imageName, outputFile, config)
+				if err != nil {
+					errorConstructor := js.Global().Get("Error")
+					errorObject := errorConstructor.New(err.Error())
+					reject.Invoke(errorObject)
+				}
+				fmt.Printf("镜像已保存到 %s\n", outputFile)
+
+				arrayConstructor := js.Global().Get("Uint8Array")
+				data := []byte("ok")
+				dataJS := arrayConstructor.New(len(data))
+				js.CopyBytesToJS(dataJS, data)
+
+				responseConstructor := js.Global().Get("Response")
+				response := responseConstructor.New(dataJS)
+
+				resolve.Invoke(response)
+			}()
+			return nil
+		})
+		promiseConstructor := js.Global().Get("Promise")
+		return promiseConstructor.New(handler)
+	})
+}
+
 func main() {
-	// 检查命令行参数
-	if len(os.Args) < 2 || len(os.Args) > 3 {
-		fmt.Println("用法: go run main.go <镜像名称> [输出文件]")
-		fmt.Println("示例: go run main.go ubuntu:latest image.tar")
-		os.Exit(1)
-	}
-
-	// 获取镜像名称和输出文件路径
-	imageName := os.Args[1]
-	outputFile := "image.tar"
-	if len(os.Args) == 3 {
-		outputFile = os.Args[2]
-	}
-
-	// 加载配置文件
-	config, err := loadConfig("config.json")
-	if err != nil {
-		fmt.Println("错误:", err)
-		os.Exit(1)
-	}
-
-	// 拉取镜像并保存
-	fmt.Printf("正在拉取镜像 %s...\n", imageName)
-	err = pullAndSaveImage(imageName, outputFile, config)
-	if err != nil {
-		fmt.Println("错误:", err)
-		os.Exit(1)
-	}
-	fmt.Printf("镜像已保存到 %s\n", outputFile)
+	js.Global().Set("MyGoFunc", MyGoFunc())
+	<-make(chan bool)
 }
